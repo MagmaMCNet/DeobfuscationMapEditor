@@ -5,7 +5,7 @@ using Spectre.Console;
 
 class Program
 {
-    static string CsvPath = "DeobfuscationMap.csv";
+    static string CsvPath = "";
     static bool IsGzipped = false;
 
     public static void Main()
@@ -14,7 +14,17 @@ class Program
         Console.InputEncoding = Encoding.UTF8;
         Console.Title = "DME - Deobfuscation Map Editor";
 
-        CsvPath = AnsiConsole.Ask<string>("[cyan]Deobfuscation Map file[/]:");
+        if (Environment.GetCommandLineArgs().Length > 1)
+        {
+            if (File.Exists(CsvPath))
+            {
+                CsvPath = Environment.GetCommandLineArgs()[1];
+                IsGzipped = CsvPath.EndsWith(".gz", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        if (CsvPath == "")
+            CsvPath = AnsiConsole.Ask<string>("[cyan]Deobfuscation Map file[/]:").Replace("\"", "").Trim();
         var map = LoadMap(CsvPath);
         Console.Clear();
 
