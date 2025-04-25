@@ -4,8 +4,8 @@ Deobfuscation Map Editor (DME) is a C# tool designed to manage and edit obfuscat
 
 ## Features
 
-- **Search Obfuscated/Real Names**: Search for obfuscated or real names to find and edit entries.
+- **Search Obfuscated/identifiers**: Search for obfuscated or real names to find and edit entries.
 - **Add New Entries**: Add new obfuscated names with their corresponding real names.
-- **Update Real Names**: Edit all obfuscated names pointing to a specific real name and update them to a new real name.
+- **Update identifiers**: Edit all obfuscated names pointing to a specific real name and update them to a new real name.
 - **Clean Invalid Data**: Clean up invalid data entries that may not be valid C# identifiers.
 - **Reload and Save**: Reload the CSV file and save the map to disk, including gzipped support for file compression.

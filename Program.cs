@@ -12,6 +12,7 @@ class Program
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
+        Console.Title = "DME - Deobfuscation Map Editor";
 
         CsvPath = AnsiConsole.Ask<string>("[cyan]Deobfuscation Map file[/]:");
         var map = LoadMap(CsvPath);
