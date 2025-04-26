@@ -40,7 +40,7 @@ public static class DME
     public static string? GetPath()
     {
         var args = Environment.GetCommandLineArgs();
-        if (args.Length > 1 && File.Exists(args[1])) return args[1];
+        if (args.Length > 1 && File.Exists(Path.GetFullPath(args[1]))) return Path.GetFullPath(args[1]);
         return null;
     }
 }
