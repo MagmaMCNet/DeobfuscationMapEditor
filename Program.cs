@@ -29,6 +29,7 @@ public static class DME
                         "🔍 Search", "➕ Add", "✏️ Update", "🗑 Remove", "🧹 Clean Data", "🔄 Reload",
                         isGzipped ? "🗜 Decompress" : "🗜 Compress", "🚪 Exit"
                     )
+                    .WrapAround(true)
             );
             Console.WriteLine();
 
@@ -80,9 +81,8 @@ static class MapService
 {
     public static bool IsGzipped
     {
-        get; private set;
+        get; set;
     }
-
     public static Dictionary<string, string> Load(string path, ref bool isGzipped)
     {
         IsGzipped = isGzipped;
@@ -114,7 +114,6 @@ static class MapService
         }
         return map;
     }
-
     public static void Save(string path, Dictionary<string, string> map)
     {
         var sorted = map
@@ -136,7 +135,6 @@ static class MapService
             File.WriteAllText(path, csv, new UTF8Encoding(false));
         }
     }
-
     static string SortKey(string name)
     {
         var parts = name.Split('.');
@@ -154,7 +152,6 @@ static class DisplayService
                 .Centered()
         );
     }
-
     public static void Stats(Dictionary<string, string> map, string path, bool isGzipped)
     {
         int distinct = map.Values.Distinct().Count();
@@ -182,7 +179,6 @@ static class Handler
         else if (option.Contains("Clean", StringComparison.InvariantCultureIgnoreCase)) Clean(ref map, path);
         else if (option.Contains("Remove", StringComparison.InvariantCultureIgnoreCase)) Remove(map, path);
     }
-
     static void Reload(ref Dictionary<string, string> map, string path, bool isGzipped)
     {
         MapService.Save(path, map);
@@ -191,11 +187,16 @@ static class Handler
         DisplayService.Header();
         DisplayService.Stats(map, path, isGzipped);
     }
-
     static void ToggleCompression(ref string path, ref bool isGzipped, Dictionary<string, string> map)
     {
         isGzipped = !isGzipped;
-        path = isGzipped ? path + ".gz" : path.Replace(".gz", string.Empty);
+
+
+        if (path.EndsWith(".gz") && !isGzipped)
+            path = path.Substring(0, path.Length - 3);
+        else if (!path.EndsWith(".gz") && isGzipped)
+            path += ".gz";
+        MapService.IsGzipped = isGzipped;
         MapService.Save(path, map);
         Thread.Sleep(250);
         AnsiConsole.MarkupLine(isGzipped
@@ -206,7 +207,6 @@ static class Handler
         DisplayService.Header();
         DisplayService.Stats(map, path, isGzipped);
     }
-
     static void Search(Dictionary<string, string> map)
     {
         var term = Input.Ask("[cyan]Enter name[/] ([yellow]identifier[/] or [green]obfuscated[/]):");
@@ -228,7 +228,6 @@ static class Handler
             AnsiConsole.Write(tbl);
         }
     }
-
     static void Add(Dictionary<string, string> map, string path)
     {
         var obf = Input.Ask("[cyan]Enter Obfuscated name[/]:");
@@ -240,7 +239,6 @@ static class Handler
         MapService.Save(path, map);
         AnsiConsole.MarkupLine("[bold green]✔ Added and saved.[/]");
     }
-
     static void Update(Dictionary<string, string> map, string path)
     {
         var target = Input.Ask("Enter the identifier you want to update:");
@@ -264,7 +262,6 @@ static class Handler
         MapService.Save(path, map);
         AnsiConsole.MarkupLine("[green]identifier updated for all matching obfuscated names and saved.[/]");
     }
-
     static void Clean(ref Dictionary<string, string> map, string path)
     {
         var invalid = map.Where(kvp => !Identifier.IsValid(kvp.Value)).ToList();
@@ -291,7 +288,6 @@ static class Handler
         }
         else AnsiConsole.MarkupLine("[yellow]Keeping all entries.[/]");
     }
-
     static void Remove(Dictionary<string, string> map, string path)
     {
         var obf = Input.Ask("[red]Enter Obfuscated name to remove[/]:");
