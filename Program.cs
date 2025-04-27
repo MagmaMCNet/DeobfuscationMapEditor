@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Ionic.Zlib;
 using Spectre.Console;
 
@@ -114,14 +115,58 @@ static class MapService
         }
         return map;
     }
+
     public static void Save(string path, Dictionary<string, string> map)
     {
-        var sorted = map
-            .OrderBy(kvp => SortKey(kvp.Value), StringComparer.OrdinalIgnoreCase)
-            .ThenBy(kvp => kvp.Value, StringComparer.OrdinalIgnoreCase)
+        static int ExtractNumber(string input)
+        {
+            var match = Regex.Match(input, @"_(\d+)\b");
+            return match.Success ? int.Parse(match.Groups[1].Value) : int.MaxValue;
+        }
+
+        var normal = map
+            .Where(kvp => !kvp.Key.Contains("::"))
+            .OrderBy(kvp => kvp.Value, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var csv = string.Join(Environment.NewLine, sorted.Select(kvp => $"{kvp.Key};{kvp.Value}"));
+        var special = map
+            .Where(kvp => kvp.Key.Contains("::"))
+            .OrderBy(kvp => {
+                var parts = kvp.Key.Split(new[] { "::" }, StringSplitOptions.None);
+                var name = parts[0];
+                return (name, number: ExtractNumber(name));
+            })
+            .ThenBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var lines = new List<string>();
+
+        if (normal.Count > 0)
+        {
+            lines.Add("## Classes");
+            lines.AddRange(normal.Select(kvp =>
+            {
+                var key = kvp.Key;
+                if (!key.Contains("."))
+                    key = "." + key;
+                return $"{key};{kvp.Value}";
+            }));
+        }
+
+        if (special.Count > 0)
+        {
+            lines.Add("");
+            lines.Add("## Types");
+            lines.AddRange(special.Select(kvp =>
+            {
+                var key = kvp.Key;
+                if (!key.Contains("."))
+                    key = "." + key;
+                return $"{key};{kvp.Value}";
+            }));
+        }
+
+        var csv = string.Join(Environment.NewLine, lines);
 
         if (IsGzipped)
         {
@@ -135,6 +180,7 @@ static class MapService
             File.WriteAllText(path, csv, new UTF8Encoding(false));
         }
     }
+
     static string SortKey(string name)
     {
         var parts = name.Split('.');
@@ -235,7 +281,10 @@ static class Handler
         var real = Input.Ask("[cyan]Enter Identifier name[/]:");
         if (string.IsNullOrEmpty(real)) return;
 
-        map[obf] = real;
+        if (obf.Contains("::") || obf.Contains("."))
+            map[obf] = real;
+        else
+            map["."+obf] = real;
         MapService.Save(path, map);
         AnsiConsole.MarkupLine("[bold green]✔ Added and saved.[/]");
     }
